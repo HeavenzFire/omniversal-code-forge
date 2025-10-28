@@ -3,9 +3,11 @@ import { FileExplorer } from '@/components/ide/FileExplorer';
 import { CodeEditor } from '@/components/ide/CodeEditor';
 import { AIAssistant } from '@/components/ide/AIAssistant';
 import { PreviewPanel } from '@/components/ide/PreviewPanel';
+import { GitHubImport } from '@/components/ide/GitHubImport';
 import type { FileNode, EditorTab } from '@/types/ide';
-import { Code2, Sparkles } from 'lucide-react';
+import { Code2, Sparkles, Zap } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 const initialFiles: FileNode[] = [
   {
@@ -56,16 +58,26 @@ const Index = () => {
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="h-14 bg-card border-b border-border flex items-center px-6 gap-4 cyber-gradient">
+      <div className="h-14 bg-card border-b border-border flex items-center px-6 gap-4 cyber-gradient justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
             <Code2 className="h-8 w-8 text-primary neon-glow" />
             <Sparkles className="h-3 w-3 text-secondary absolute -top-1 -right-1 animate-pulse" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-primary">OMNIVERSAL CODESPACE</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-primary">OMNIVERSAL CODESPACE</h1>
+              <Badge variant="secondary" className="gap-1">
+                <Zap className="h-3 w-3" />
+                PRO
+              </Badge>
+            </div>
             <p className="text-xs text-muted-foreground">Infinite Intelligence • Zero Limits • For The World</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <GitHubImport />
         </div>
       </div>
 

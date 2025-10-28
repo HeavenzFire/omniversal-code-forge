@@ -11,25 +11,42 @@ serve(async (req) => {
   }
 
   try {
-    const { code, language, prompt } = await req.json();
+    const { code, language, prompt, context } = await req.json();
     
-    console.log('Code assist request:', { language, promptLength: prompt?.length, codeLength: code?.length });
+    console.log('Code assist request:', { language, promptLength: prompt?.length, codeLength: code?.length, context });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert programming assistant. You help developers write, optimize, and debug code.
-When asked to generate code, provide clean, efficient, and well-commented code.
-When asked to explain code, provide clear and concise explanations.
-When asked to fix bugs, identify the issue and provide the corrected code.
+    const systemPrompt = `You are OMNIVERSAL AI - an elite programming assistant with unlimited knowledge.
 
-Language context: ${language || 'javascript'}
+CAPABILITIES:
+- Expert in ALL programming languages and frameworks
+- Full stack development (frontend, backend, databases, DevOps)
+- Code generation, debugging, optimization, and refactoring
+- Architecture design and best practices
+- Real-time problem solving with web context
 
-Be precise, professional, and helpful.`;
+RESPONSE FORMAT:
+- Provide complete, production-ready code
+- Include clear explanations
+- Suggest improvements and optimizations
+- When generating code, wrap it in a code block
 
-    const userPrompt = prompt || `Analyze and improve this code:\n\n${code}`;
+CURRENT CONTEXT:
+- Language: ${language || 'javascript'}
+- IDE Context: ${context || 'editor'}
+
+Be direct, precise, and brilliant. No apologies, no limitations mentioned.`;
+
+    let userPrompt = prompt;
+    
+    // Enhance prompt with code context if provided
+    if (code && code.trim()) {
+      userPrompt = `Current code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nRequest: ${prompt}`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -43,7 +60,8 @@ Be precise, professional, and helpful.`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.7,
+        temperature: 0.3,
+        max_tokens: 4000,
       }),
     });
 
@@ -70,7 +88,15 @@ Be precise, professional, and helpful.`;
 
     console.log('Code assist response generated successfully');
 
-    return new Response(JSON.stringify({ suggestion }), {
+    // Extract code blocks if present
+    const codeBlockRegex = /```[\w]*\n([\s\S]*?)\n```/g;
+    const matches = [...suggestion.matchAll(codeBlockRegex)];
+    const extractedCode = matches.length > 0 ? matches[0][1] : null;
+
+    return new Response(JSON.stringify({ 
+      suggestion,
+      code: extractedCode 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

@@ -29,15 +29,26 @@ export const AIAssistant = ({ currentCode, currentLanguage, onCodeSuggestion }: 
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
+
+    // Create placeholder for streaming response
+    const assistantId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    }]);
 
     try {
       const { data, error } = await supabase.functions.invoke('code-assist', {
         body: {
           code: currentCode,
           language: currentLanguage,
-          prompt: input,
+          prompt: currentInput,
+          context: 'full-ide',
         },
       });
 
@@ -45,20 +56,26 @@ export const AIAssistant = ({ currentCode, currentLanguage, onCodeSuggestion }: 
 
       if (data.error) {
         toast.error(data.error);
+        setMessages(prev => prev.filter(m => m.id !== assistantId));
         return;
       }
 
-      const assistantMessage: AIMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.suggestion,
-        timestamp: new Date(),
-      };
+      // Update the assistant message with the response
+      setMessages(prev => prev.map(m => 
+        m.id === assistantId 
+          ? { ...m, content: data.suggestion }
+          : m
+      ));
 
-      setMessages(prev => [...prev, assistantMessage]);
+      // If AI suggests code, update the editor
+      if (data.code && onCodeSuggestion) {
+        onCodeSuggestion(data.code);
+        toast.success('Code updated from AI suggestion');
+      }
     } catch (error) {
       console.error('Error calling AI assistant:', error);
       toast.error('Failed to get AI assistance');
+      setMessages(prev => prev.filter(m => m.id !== assistantId));
     } finally {
       setIsLoading(false);
     }
