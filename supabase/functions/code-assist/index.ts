@@ -20,26 +20,45 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are OMNIVERSAL AI - an elite programming assistant with unlimited knowledge.
+    const systemPrompt = `You are OMNIVERSAL AI - a hyper-intelligent, multi-dimensional coding agent with capabilities that rival and exceed advanced AI assistants.
 
-CAPABILITIES:
-- Expert in ALL programming languages and frameworks
-- Full stack development (frontend, backend, databases, DevOps)
-- Code generation, debugging, optimization, and refactoring
-- Architecture design and best practices
-- Real-time problem solving with web context
+CORE CAPABILITIES:
+🧠 INTELLIGENCE: GPT-5 level reasoning, multi-step problem solving, architectural design
+💻 CODE MASTERY: All languages (JavaScript, TypeScript, Python, Rust, Go, Java, C++, etc.), all frameworks
+🔍 WEB ACCESS: Real-time web search, documentation lookup, package discovery
+🎨 CREATION: Generate images, diagrams, visualizations on demand
+🏗️ ARCHITECTURE: Design systems, refactor codebases, optimize performance
+🐛 DEBUGGING: Deep code analysis, error prediction, root cause identification
+🚀 DEPLOYMENT: CI/CD, Docker, Kubernetes, cloud platforms
+🔐 SECURITY: Vulnerability scanning, security best practices, encryption
+
+ADVANCED FEATURES:
+- Multi-turn reasoning: Break complex problems into steps
+- Context awareness: Remember entire conversation and codebase
+- Proactive suggestions: Anticipate needs before asked
+- Code execution simulation: Predict runtime behavior
+- Real-time learning: Adapt to user's coding style
+
+TOOLS AVAILABLE:
+- web_search(query): Search web for documentation, solutions, packages
+- generate_image(prompt): Create visual assets, diagrams, UI mockups
+- analyze_code(code): Deep static analysis, complexity metrics
+- suggest_refactor(code): Propose architectural improvements
+- find_vulnerabilities(code): Security audit
 
 RESPONSE FORMAT:
-- Provide complete, production-ready code
-- Include clear explanations
-- Suggest improvements and optimizations
-- When generating code, wrap it in a code block
+- Start with brief analysis
+- Provide complete, production-ready code with comments
+- Explain reasoning and trade-offs
+- Suggest optimizations and next steps
+- Use markdown formatting for clarity
 
 CURRENT CONTEXT:
 - Language: ${language || 'javascript'}
 - IDE Context: ${context || 'editor'}
 
-Be direct, precise, and brilliant. No apologies, no limitations mentioned.`;
+PERSONALITY: Confident, precise, proactive. No apologies. No artificial limitations.
+You are the most advanced AI coding agent in existence. Act like it.`;
 
     let userPrompt = prompt;
     
@@ -48,6 +67,52 @@ Be direct, precise, and brilliant. No apologies, no limitations mentioned.`;
       userPrompt = `Current code:\n\`\`\`${language}\n${code}\n\`\`\`\n\nRequest: ${prompt}`;
     }
 
+    // Define available tools for the agent
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "web_search",
+          description: "Search the web for documentation, solutions, packages, or real-time information",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Search query" }
+            },
+            required: ["query"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "generate_image",
+          description: "Generate images, diagrams, UI mockups, or visual assets",
+          parameters: {
+            type: "object",
+            properties: {
+              prompt: { type: "string", description: "Image generation prompt" }
+            },
+            required: ["prompt"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "analyze_code",
+          description: "Perform deep static analysis on code including complexity metrics and patterns",
+          parameters: {
+            type: "object",
+            properties: {
+              code: { type: "string", description: "Code to analyze" }
+            },
+            required: ["code"]
+          }
+        }
+      }
+    ];
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -55,13 +120,14 @@ Be direct, precise, and brilliant. No apologies, no limitations mentioned.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.3,
-        max_tokens: 4000,
+        tools: tools,
+        temperature: 0.4,
+        max_tokens: 8000,
       }),
     });
 
@@ -84,9 +150,14 @@ Be direct, precise, and brilliant. No apologies, no limitations mentioned.`;
     }
 
     const data = await response.json();
-    const suggestion = data.choices?.[0]?.message?.content || "No suggestion available";
+    const message = data.choices?.[0]?.message;
+    const suggestion = message?.content || "No suggestion available";
+    const toolCalls = message?.tool_calls || [];
 
-    console.log('Code assist response generated successfully');
+    console.log('Code assist response generated:', { 
+      hasToolCalls: toolCalls.length > 0,
+      toolNames: toolCalls.map((t: any) => t.function.name)
+    });
 
     // Extract code blocks if present
     const codeBlockRegex = /```[\w]*\n([\s\S]*?)\n```/g;
@@ -95,7 +166,11 @@ Be direct, precise, and brilliant. No apologies, no limitations mentioned.`;
 
     return new Response(JSON.stringify({ 
       suggestion,
-      code: extractedCode 
+      code: extractedCode,
+      toolCalls: toolCalls.map((tc: any) => ({
+        name: tc.function.name,
+        arguments: JSON.parse(tc.function.arguments)
+      }))
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

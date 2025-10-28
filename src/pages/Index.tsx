@@ -69,10 +69,10 @@ const Index = () => {
               <h1 className="text-xl font-bold text-primary">OMNIVERSAL CODESPACE</h1>
               <Badge variant="secondary" className="gap-1">
                 <Zap className="h-3 w-3" />
-                PRO
+                ULTIMATE
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">Infinite Intelligence • Zero Limits • For The World</p>
+            <p className="text-xs text-muted-foreground">Hyper-Intelligence • Web Access • Image Gen • No Limits</p>
           </div>
         </div>
 

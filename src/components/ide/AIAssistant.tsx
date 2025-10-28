@@ -67,6 +67,13 @@ export const AIAssistant = ({ currentCode, currentLanguage, onCodeSuggestion }: 
           : m
       ));
 
+      // Handle tool calls if present
+      if (data.toolCalls && data.toolCalls.length > 0) {
+        console.log('AI agent called tools:', data.toolCalls);
+        const toolNames = data.toolCalls.map((t: any) => t.name).join(', ');
+        toast.success(`Agent used tools: ${toolNames}`);
+      }
+
       // If AI suggests code, update the editor
       if (data.code && onCodeSuggestion) {
         onCodeSuggestion(data.code);
@@ -95,10 +102,13 @@ export const AIAssistant = ({ currentCode, currentLanguage, onCodeSuggestion }: 
             <p>Ask me anything about your code!</p>
             <p className="text-xs mt-2">I can help with:</p>
             <ul className="text-xs mt-2 space-y-1">
-              <li>• Code generation</li>
-              <li>• Bug fixing</li>
-              <li>• Optimization</li>
-              <li>• Explanations</li>
+              <li>🧠 Advanced reasoning & problem solving</li>
+              <li>💻 Multi-language code generation</li>
+              <li>🔍 Web search & documentation lookup</li>
+              <li>🎨 Image & diagram generation</li>
+              <li>🐛 Deep debugging & analysis</li>
+              <li>🏗️ Architecture & refactoring</li>
+              <li>🔐 Security auditing</li>
             </ul>
           </div>
         ) : (
