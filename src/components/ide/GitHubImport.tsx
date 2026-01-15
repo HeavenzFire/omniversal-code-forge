@@ -74,6 +74,49 @@ export const GitHubImport = ({ onImport }: GitHubImportProps) => {
     }
   };
 
+  // Get language from file extension
+  const getLanguageFromExtension = (filename: string): string => {
+    const ext = filename.split('.').pop()?.toLowerCase() || '';
+    const languageMap: Record<string, string> = {
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'ts': 'typescript',
+      'tsx': 'typescript',
+      'json': 'json',
+      'md': 'markdown',
+      'html': 'html',
+      'css': 'css',
+      'scss': 'scss',
+      'less': 'less',
+      'py': 'python',
+      'rb': 'ruby',
+      'go': 'go',
+      'rs': 'rust',
+      'java': 'java',
+      'c': 'c',
+      'cpp': 'cpp',
+      'h': 'c',
+      'hpp': 'cpp',
+      'sh': 'shell',
+      'bash': 'shell',
+      'sql': 'sql',
+      'graphql': 'graphql',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+      'toml': 'toml',
+      'xml': 'xml',
+      'svg': 'xml',
+      'vue': 'vue',
+      'svelte': 'svelte',
+      'php': 'php',
+      'swift': 'swift',
+      'kt': 'kotlin',
+      'scala': 'scala',
+      'lua': 'lua',
+    };
+    return languageMap[ext] || 'plaintext';
+  };
+
   // Convert flat file list to nested FileNode tree
   const buildFileTree = (files: { path: string; content: string; sha: string }[]): FileNode[] => {
     const root: FileNode[] = [];
@@ -92,6 +135,7 @@ export const GitHubImport = ({ onImport }: GitHubImportProps) => {
         name: fileName,
         type: 'file',
         content: file.content,
+        language: getLanguageFromExtension(fileName),
       };
 
       if (parentPath === '') {
