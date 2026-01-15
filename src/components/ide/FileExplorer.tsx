@@ -7,7 +7,7 @@ import type { FileNode } from '@/types/ide';
 interface FileExplorerProps {
   files: FileNode[];
   onFileSelect: (file: FileNode) => void;
-  onFileCreate: (name: string, type: 'file' | 'folder') => void;
+  onFileCreate?: (name: string, type: 'file' | 'folder') => void;
   selectedFileId?: string;
 }
 
@@ -29,7 +29,7 @@ export const FileExplorer = ({ files, onFileSelect, onFileCreate, selectedFileId
   };
 
   const handleCreate = () => {
-    if (newName.trim() && creating) {
+    if (newName.trim() && creating && onFileCreate) {
       onFileCreate(newName.trim(), creating.type);
       setNewName('');
       setCreating(null);
