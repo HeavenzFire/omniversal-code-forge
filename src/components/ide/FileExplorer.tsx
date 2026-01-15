@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,33 @@ interface FileExplorerProps {
 }
 
 export const FileExplorer = ({ files, onFileSelect, onFileCreate, selectedFileId }: FileExplorerProps) => {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(['root']));
+  // Collect all folder IDs to expand by default
+  const collectFolderIds = (nodes: FileNode[]): string[] => {
+    const ids: string[] = [];
+    for (const node of nodes) {
+      if (node.type === 'folder') {
+        ids.push(node.id);
+        if (node.children) {
+          ids.push(...collectFolderIds(node.children));
+        }
+      }
+    }
+    return ids;
+  };
+
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['root', ...collectFolderIds(files)]));
   const [creating, setCreating] = useState<{ type: 'file' | 'folder' } | null>(null);
   const [newName, setNewName] = useState('');
+
+  // Auto-expand new folders when files change
+  useEffect(() => {
+    const newFolderIds = collectFolderIds(files);
+    setExpanded(prev => {
+      const next = new Set(prev);
+      newFolderIds.forEach(id => next.add(id));
+      return next;
+    });
+  }, [files]);
 
   const toggleExpand = (id: string) => {
     setExpanded(prev => {
