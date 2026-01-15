@@ -4,8 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import type { FileNode } from '@/types/ide';
 
-export const GitHubImport = () => {
+interface GitHubImportProps {
+  onImport?: (files: FileNode[]) => void;
+}
+
+export const GitHubImport = ({ onImport }: GitHubImportProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [githubUrl, setGithubUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,8 +40,23 @@ export const GitHubImport = () => {
 
       const files = await response.json();
       
-      toast.success(`Found ${files.length} files. GitHub import simulated (full OAuth integration requires backend).`);
+      // Convert GitHub files to FileNode format
+      const importedFiles: FileNode[] = files
+        .filter((f: any) => f.type === 'file')
+        .map((f: any) => ({
+          id: `github-${f.sha}`,
+          name: f.name,
+          type: 'file' as const,
+          content: `// Imported from ${owner}/${repoName}\n// File: ${f.path}\n// Loading content...`,
+        }));
+
+      if (onImport && importedFiles.length > 0) {
+        onImport(importedFiles);
+      }
+      
+      toast.success(`Imported ${importedFiles.length} files from ${owner}/${repoName}`);
       setIsOpen(false);
+      setGithubUrl('');
     } catch (error) {
       console.error('Import error:', error);
       toast.error('Failed to import from GitHub');
