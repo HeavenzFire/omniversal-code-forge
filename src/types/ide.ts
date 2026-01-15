@@ -2,17 +2,17 @@ export interface FileNode {
   id: string;
   name: string;
   type: 'file' | 'folder';
+  children?: FileNode[];
   content?: string;
   language?: string;
-  children?: FileNode[];
 }
 
 export interface EditorTab {
   id: string;
   name: string;
-  content: string;
   language: string;
-  modified: boolean;
+  content: string;
+  isDirty: boolean;
 }
 
 export interface AIMessage {
